@@ -324,7 +324,9 @@ Resources:
 
   Efs:
     Type: AWS::EFS::FileSystem
-    Properties: {}
+    Properties:
+      BackupPolicy:
+        Status: ENABLED
 
   MountA:
     Type: AWS::EFS::MountTarget
@@ -420,6 +422,55 @@ Resources:
         - !Ref SubnetA
         - !Ref SubnetB
 
+  StackUpdateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - cloudformation.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: Allow # Used to pass role when calling CreateLaunchConfiguration
+                Action:
+                  - iam:PassRole
+                  - iam:GetRole
+                Resource: !GetAtt InstanceRole.Arn
+              - Effect: Allow # Used to resolve EC2 AMI
+                Action:
+                  - ec2:DescribeImages
+                Resource: "*"
+              - Effect: Allow # Used to resolve a few variables in the template
+                Action:
+                  - ssm:GetParameters
+                Resource: arn:aws:ssm:*::parameter/aws*
+              - Effect: Allow # Used to update the ECS service DesiredCount
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                Resource: !Ref EcsService
+              - Effect: Allow # Used to update AutoScaling DesiredCapacity
+                Action:
+                  - autoscaling:UpdateAutoScalingGroup
+                Resource: !Sub arn:aws:autoscaling:*:*:autoScalingGroup:*:autoScalingGroupName/${AutoScalingGroup}
+              - Effect: Allow # Used to re-create LaunchConfigurations (not sure why it's needed)
+                Action:
+                  - autoscaling:CreateLaunchConfiguration
+                  - autoscaling:DeleteLaunchConfiguration
+                Resource: !Sub arn:aws:autoscaling:*:*:launchConfiguration:*:launchConfigurationName/${LaunchConfiguration}
+              - Effect: Allow # Used to update AutoScaling
+                Action:
+                  - autoscaling:DescribeLaunchConfigurations
+                Resource: "*"
+
   InstanceRole:
     Type: AWS::IAM::Role
     Properties: 
@@ -487,6 +538,8 @@ Resources:
           Environment:
             - Name: "EULA"
               Value: "TRUE"
+            - Name: "INIT_MEMORY"
+              Value: "512M"
             - !If
               - MinecraftTypeTagProvided
               - Name: "TYPE"
@@ -514,7 +567,7 @@ Resources:
               - !Ref 'AWS::NoValue'
             - !If
               - MemoryProvided
-              - Name: "MEMORY"
+              - Name: "MAX_MEMORY"
                 Value: !Sub "${Memory}"
               - !Ref 'AWS::NoValue'
             - !If
