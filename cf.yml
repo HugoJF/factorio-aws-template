@@ -11,9 +11,9 @@ Parameters:
     Type: String
     Description: "Running: A spot instance will launch shortly after setting this parameter; your Minecraft server should start within 5-10 minutes of changing this parameter (once UPDATE_IN_PROGRESS becomes UPDATE_COMPLETE). Stopped: Your spot instance (and thus Minecraft container) will be terminated shortly after setting this parameter."
     Default: Running
-    AllowedValues: 
-    - Running
-    - Stopped
+    AllowedValues:
+      - Running
+      - Stopped
 
   InstanceType:
     Type: String
@@ -69,10 +69,10 @@ Parameters:
     Description: "The game's difficulty"
     Default: normal
     AllowedValues:
-    - peaceful
-    - easy
-    - normal
-    - hard
+      - peaceful
+      - easy
+      - normal
+      - hard
 
   Whitelist:
     Type: String
@@ -106,32 +106,32 @@ Parameters:
     Description: "Options: creative, survival (default), adventure, spectator (v1.8+)"
     Default: survival
     AllowedValues:
-    - creative
-    - survival
-    - adventure
-    - spectator
+      - creative
+      - survival
+      - adventure
+      - spectator
 
   LevelType:
     Type: String
     Description: "Options: DEFAULT, FLAT, LARGEBIOMES, AMPLIFIED, CUSTOMIZED, BUFFET, BIOMESOP (v1.12-), BIOMESOPLENTY (v1.15+)"
     Default: DEFAULT
     AllowedValues:
-    - DEFAULT
-    - FLAT
-    - LARGEBIOMES
-    - AMPLIFIED
-    - CUSTOMIZED
-    - BUFFET
-    - BIOMESOP
-    - BIOMESOPLENTY
+      - DEFAULT
+      - FLAT
+      - LARGEBIOMES
+      - AMPLIFIED
+      - CUSTOMIZED
+      - BUFFET
+      - BIOMESOP
+      - BIOMESOPLENTY
 
   EnableRollingLogs:
     Type: String
     Description: "By default the log file will grow without limit. Set to true to use a rolling log strategy."
     Default: false
     AllowedValues:
-    - true
-    - false
+      - true
+      - false
 
   Timezone:
     Type: String
@@ -140,43 +140,43 @@ Parameters:
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label: 
+      - Label:
           default: Essential Configuration
         Parameters:
-        - ServerState
-        - InstanceType
-        - SpotPrice
+          - ServerState
+          - InstanceType
+          - SpotPrice
       - Label:
           default: Server Settings
         Parameters:
-        - MinecraftImageTag
+          - MinecraftImageTag
       - Label:
           default: Optional Server Settings
         Parameters:
-        - MinecraftTypeTag
-        - AdminPlayerNames
-        - Difficulty
-        - Whitelist
-        - MinecraftVersion
-        - Memory
-        - Seed
-        - MaxPlayers
-        - ViewDistance
-        - GameMode
-        - LevelType
-        - EnableRollingLogs
-        - Timezone
-      - Label: 
+          - MinecraftTypeTag
+          - AdminPlayerNames
+          - Difficulty
+          - Whitelist
+          - MinecraftVersion
+          - Memory
+          - Seed
+          - MaxPlayers
+          - ViewDistance
+          - GameMode
+          - LevelType
+          - EnableRollingLogs
+          - Timezone
+      - Label:
           default: Optional Remote Access (SSH) Configuration
         Parameters:
-        - KeyPairName
-        - YourIPv4
-        - YourIPv6
-      - Label: 
+          - KeyPairName
+          - YourIPv4
+          - YourIPv6
+      - Label:
           default: Optional DNS Configuration
         Parameters:
-        - HostedZoneId
-        - RecordName
+          - HostedZoneId
+          - RecordName
     ParameterLabels:
       ServerState:
         default: "Update this parameter to shut down / start up your Minecraft server as required to save on cost. Takes a few minutes to take effect."
@@ -257,9 +257,9 @@ Resources:
   # BASIC VPC
   # ====================================================
 
-  Vpc: 
+  Vpc:
     Type: AWS::EC2::VPC
-    Properties: 
+    Properties:
       CidrBlock: 10.100.0.0/26
       EnableDnsSupport: true
       EnableDnsHostnames: true
@@ -267,53 +267,53 @@ Resources:
   SubnetA:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: !Select 
-      - 0
-      - !GetAZs 
-        Ref: 'AWS::Region'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
       CidrBlock: !Select [ 0, !Cidr [ 10.100.0.0/26, 4, 4 ] ]
-      VpcId: !Ref Vpc  
+      VpcId: !Ref Vpc
 
   SubnetARoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
+    Properties:
       RouteTableId: !Ref RouteTable
       SubnetId: !Ref SubnetA
 
   SubnetBRoute:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
+    Properties:
       RouteTableId: !Ref RouteTable
-      SubnetId: !Ref SubnetB  
+      SubnetId: !Ref SubnetB
 
   SubnetB:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: !Select 
-      - 1
-      - !GetAZs 
-        Ref: 'AWS::Region'
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs
+          Ref: 'AWS::Region'
       CidrBlock: !Select [ 1, !Cidr [ 10.100.0.0/26, 4, 4 ] ]
       VpcId: !Ref Vpc
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-    Properties: {}
+    Properties: { }
 
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
-    Properties: 
+    Properties:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref Vpc
 
   RouteTable:
     Type: AWS::EC2::RouteTable
-    Properties: 
-      VpcId: !Ref Vpc    
+    Properties:
+      VpcId: !Ref Vpc
 
   Route:
     Type: AWS::EC2::Route
-    Properties: 
+    Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
       RouteTableId: !Ref RouteTable
@@ -333,7 +333,7 @@ Resources:
     Properties:
       FileSystemId: !Ref Efs
       SecurityGroups:
-      - !Ref EfsSg
+        - !Ref EfsSg
       SubnetId: !Ref SubnetA
 
   MountB:
@@ -341,49 +341,49 @@ Resources:
     Properties:
       FileSystemId: !Ref Efs
       SecurityGroups:
-      - !Ref EfsSg
+        - !Ref EfsSg
       SubnetId: !Ref SubnetB
 
   EfsSg:
     Type: AWS::EC2::SecurityGroup
-    Properties: 
+    Properties:
       GroupName: !Sub "${AWS::StackName}-efs"
       GroupDescription: !Sub "${AWS::StackName}-efs"
       SecurityGroupIngress:
-      - FromPort: 2049
-        ToPort: 2049
-        IpProtocol: tcp
-        SourceSecurityGroupId: !Ref Ec2Sg
+        - FromPort: 2049
+          ToPort: 2049
+          IpProtocol: tcp
+          SourceSecurityGroupId: !Ref Ec2Sg
       VpcId: !Ref Vpc
-      
+
   # ====================================================
   # INSTANCE CONFIG
   # ====================================================
 
   Ec2Sg:
     Type: AWS::EC2::SecurityGroup
-    Properties: 
+    Properties:
       GroupName: !Sub "${AWS::StackName}-ec2"
       GroupDescription: !Sub "${AWS::StackName}-ec2"
       SecurityGroupIngress:
-      - !If
-        - IPv4AddressProvided 
-        - FromPort: 22
-          ToPort: 22
+        - !If
+          - IPv4AddressProvided
+          - FromPort: 22
+            ToPort: 22
+            IpProtocol: tcp
+            CidrIp: !Sub "${YourIPv4}/32"
+          - !Ref 'AWS::NoValue'
+        - !If
+          - IPv6AddressProvided
+          - FromPort: 22
+            ToPort: 22
+            IpProtocol: tcp
+            CidrIpv6: !Sub "${YourIPv6}/128"
+          - !Ref 'AWS::NoValue'
+        - FromPort: 25565
+          ToPort: 25565
           IpProtocol: tcp
-          CidrIp: !Sub "${YourIPv4}/32"
-        - !Ref 'AWS::NoValue'
-      - !If
-        - IPv6AddressProvided 
-        - FromPort: 22
-          ToPort: 22
-          IpProtocol: tcp
-          CidrIpv6: !Sub "${YourIPv6}/128"
-        - !Ref 'AWS::NoValue'
-      - FromPort: 25565
-        ToPort: 25565
-        IpProtocol: tcp
-        CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0
       VpcId: !Ref Vpc
 
   LaunchConfiguration:
@@ -393,10 +393,10 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfile
       ImageId: !Ref ECSAMI
       InstanceType: !Ref InstanceType
-      KeyName: 
+      KeyName:
         !If [ KeyPairNameProvided, !Ref KeyPairName, !Ref 'AWS::NoValue' ]
       SecurityGroups:
-      - !Ref Ec2Sg
+        - !Ref Ec2Sg
       SpotPrice: !If [ SpotPriceProvided, !Ref SpotPrice, !Ref 'AWS::NoValue' ]
       UserData:
         Fn::Base64: !Sub |
@@ -410,8 +410,8 @@ Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
-    - MountA
-    - MountB
+      - MountA
+      - MountB
     Properties:
       AutoScalingGroupName: !Sub "${AWS::StackName}-asg"
       DesiredCapacity: !FindInMap [ ServerState, !Ref ServerState, DesiredCapacity ]
@@ -428,17 +428,17 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - cloudformation.amazonaws.com
-          Action:
-          - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+            Action:
+              - sts:AssumeRole
       Policies:
         - PolicyName: root
-          PolicyDocument: 
+          PolicyDocument:
             Version: "2012-10-17"
-            Statement: 
+            Statement:
               - Effect: Allow # Used to pass role when calling CreateLaunchConfiguration
                 Action:
                   - iam:PassRole
@@ -461,11 +461,14 @@ Resources:
                 Action:
                   - autoscaling:UpdateAutoScalingGroup
                 Resource: !Sub arn:aws:autoscaling:*:*:autoScalingGroup:*:autoScalingGroupName/${AutoScalingGroup}
-              - Effect: Allow # Used to re-create LaunchConfigurations (not sure why it's needed)
+              - Effect: Allow # Used to removing the existing LaunchConfiguration (not sure why it's needed)
                 Action:
-                  - autoscaling:CreateLaunchConfiguration
                   - autoscaling:DeleteLaunchConfiguration
                 Resource: !Sub arn:aws:autoscaling:*:*:launchConfiguration:*:launchConfigurationName/${LaunchConfiguration}
+              - Effect: Allow # Used to create a new LaunchConfiguration, needs to be every resource since we cannot predict the LogicalID (not sure why it's needed)
+                Action:
+                  - autoscaling:CreateLaunchConfiguration
+                Resource: "*"
               - Effect: Allow # Used to update AutoScaling
                 Action:
                   - autoscaling:DescribeLaunchConfigurations
@@ -473,30 +476,30 @@ Resources:
 
   InstanceRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - ec2.amazonaws.com
-          Action:
-          - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
       Policies:
         - PolicyName: root
-          PolicyDocument: 
+          PolicyDocument:
             Version: "2012-10-17"
-            Statement: 
+            Statement:
               - Effect: "Allow"
                 Action: "route53:*"
                 Resource: "*"
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Properties: 
+    Properties:
       Roles:
         - !Ref InstanceRole
 
@@ -507,34 +510,34 @@ Resources:
 
   EcsService:
     Type: AWS::ECS::Service
-    Properties: 
+    Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: !FindInMap [ ServerState, !Ref ServerState, DesiredCapacity ]
       ServiceName: !Sub "${AWS::StackName}-ecs-service"
-      TaskDefinition: !Ref EcsTask  
+      TaskDefinition: !Ref EcsTask
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
   EcsTask:
     Type: AWS::ECS::TaskDefinition
-    Properties: 
+    Properties:
       Volumes:
-      - Host:
-          SourcePath: /opt/minecraft
-        Name: minecraft
-      ContainerDefinitions:      
+        - Host:
+            SourcePath: /opt/minecraft
+          Name: minecraft
+      ContainerDefinitions:
         - Name: minecraft
           MemoryReservation: 1024
           Image: !Sub "itzg/minecraft-server:${MinecraftImageTag}"
           PortMappings:
-          - ContainerPort: 25565
-            HostPort: 25565
-            Protocol: tcp
+            - ContainerPort: 25565
+              HostPort: 25565
+              Protocol: tcp
           MountPoints:
-          - ContainerPath: /data
-            SourceVolume: minecraft
-            ReadOnly: false
+            - ContainerPath: /data
+              SourceVolume: minecraft
+              ReadOnly: false
           Environment:
             - Name: "EULA"
               Value: "TRUE"
@@ -613,23 +616,23 @@ Resources:
   SetDNSRecordLambdaRole:
     Type: AWS::IAM::Role
     Condition: DnsConfigEnabled
-    Properties: 
+    Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
-          PolicyDocument: 
+          PolicyDocument:
             Version: "2012-10-17"
-            Statement: 
+            Statement:
               - Effect: "Allow"
                 Action: "route53:*"
                 Resource: "*"
@@ -640,7 +643,7 @@ Resources:
   SetDNSRecordLambda:
     Type: "AWS::Lambda::Function"
     Condition: DnsConfigEnabled
-    Properties: 
+    Properties:
       Environment:
         Variables:
           HostedZoneId: !Ref HostedZoneId
@@ -682,15 +685,15 @@ Resources:
   LaunchEvent:
     Type: AWS::Events::Rule
     Condition: DnsConfigEnabled
-    Properties: 
+    Properties:
       EventPattern:
         source:
-        - aws.autoscaling
+          - aws.autoscaling
         detail-type:
-        - EC2 Instance Launch Successful
+          - EC2 Instance Launch Successful
         detail:
           AutoScalingGroupName:
-          - !Ref AutoScalingGroup
+            - !Ref AutoScalingGroup
       Name: !Sub "${AWS::StackName}-instance-launch"
       State: ENABLED
       Targets:
@@ -700,7 +703,7 @@ Resources:
   LaunchEventLambdaPermission:
     Type: AWS::Lambda::Permission
     Condition: DnsConfigEnabled
-    Properties: 
+    Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt SetDNSRecordLambda.Arn
       Principal: events.amazonaws.com
