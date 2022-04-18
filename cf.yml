@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Minecraft Spot Price Server via Docker / ECS
+Description: Factorio Spot Price Server via Docker / ECS
 Parameters:
 
   ECSAMI:
@@ -9,7 +9,7 @@ Parameters:
 
   ServerState:
     Type: String
-    Description: "Running: A spot instance will launch shortly after setting this parameter; your Minecraft server should start within 5-10 minutes of changing this parameter (once UPDATE_IN_PROGRESS becomes UPDATE_COMPLETE). Stopped: Your spot instance (and thus Minecraft container) will be terminated shortly after setting this parameter."
+    Description: "Running: A spot instance will launch shortly after setting this parameter; your Factorio server should start within 5-10 minutes of changing this parameter (once UPDATE_IN_PROGRESS becomes UPDATE_COMPLETE). Stopped: Your spot instance will be terminated shortly after setting this parameter."
     Default: Running
     AllowedValues:
       - Running
@@ -42,100 +42,33 @@ Parameters:
 
   HostedZoneId:
     Type: String
-    Description: (Optional - An empty value disables this feature) If you have a hosted zone in Route 53 and wish to set a DNS record whenever your Minecraft instance starts, supply the hosted zone ID here.
+    Description: (Optional - An empty value disables this feature) If you have a hosted zone in Route 53 and wish to set a DNS record whenever your instance starts, supply the hosted zone ID here.
     Default: ''
 
   RecordName:
     Type: String
-    Description: (Optional - An empty value disables this feature) If you have a hosted zone in Route 53 and wish to set a DNS record whenever your Minecraft instance starts, supply the name of the record here (e.g. minecraft.mydomain.com).
+    Description: (Optional - An empty value disables this feature) If you have a hosted zone in Route 53 and wish to set a DNS record whenever your instance starts, supply the name of the record here (e.g. server.mydomain.com).
     Default: ''
-
-  MinecraftImageTag:
-    Type: String
-    Description: "Java version (Examples include latest, adopt13, openj9, etc) Refer to tag descriptions available here: https://github.com/itzg/docker-minecraft-server)"
-    Default: 'latest'
-
-  MinecraftTypeTag:
-    Type: String
-    Description: "(Examples include SPIGOT, BUKKIT, TUINITY, etc) Refer to tag descriptions available here: https://github.com/itzg/docker-minecraft-server)"
-
-  AdminPlayerNames:
-    Type: String
-    Description: Op/Administrator Players
-    Default: ''
-
-  Difficulty:
-    Type: String
-    Description: "The game's difficulty"
-    Default: normal
-    AllowedValues:
-      - peaceful
-      - easy
-      - normal
-      - hard
-
-  Whitelist:
-    Type: String
-    Description: Usernames of your friends
-    Default: ''
-
-  MinecraftVersion:
-    Type: String
-    Description: Server minecraft version
-    Default: ''
-
-  Memory:
-    Type: String
-    Description: How much Memory to allocate for the JVM
-    Default: '1G'
-
-  Seed:
-    Type: String
-    Description: The seed used to generate the world
-
-  MaxPlayers:
-    Type: Number
-    Description: Max number of players that can connect simultaneously (default 20)
-
-  ViewDistance:
-    Type: Number
-    Description: Max view radius (in chunks) the server will send to the client (default 10)
-
-  GameMode:
-    Type: String
-    Description: "Options: creative, survival (default), adventure, spectator (v1.8+)"
-    Default: survival
-    AllowedValues:
-      - creative
-      - survival
-      - adventure
-      - spectator
-
-  LevelType:
-    Type: String
-    Description: "Options: DEFAULT, FLAT, LARGEBIOMES, AMPLIFIED, CUSTOMIZED, BUFFET, BIOMESOP (v1.12-), BIOMESOPLENTY (v1.15+)"
-    Default: DEFAULT
-    AllowedValues:
-      - DEFAULT
-      - FLAT
-      - LARGEBIOMES
-      - AMPLIFIED
-      - CUSTOMIZED
-      - BUFFET
-      - BIOMESOP
-      - BIOMESOPLENTY
-
-  EnableRollingLogs:
-    Type: String
-    Description: "By default the log file will grow without limit. Set to true to use a rolling log strategy."
-    Default: false
-    AllowedValues:
-      - true
-      - false
 
   Timezone:
     Type: String
     Description: "Change the server's timezone. Use the canonical name of the format: Area/Location (e.g. America/New_York)"
+
+  GenerateNewSave:
+    Type: String
+    Description: "Generate a new save if one does not exist before starting the server"
+    Default: false
+
+  SaveName:
+    Type: String
+    Description: "Name to use for the save file"
+    Default: _autosave1
+
+  LoadLatestSave:
+    Type: String
+    Description: "Load latest when true. Otherwise load SAVE_NAME"
+    Default: true
+
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -146,25 +79,12 @@ Metadata:
           - ServerState
           - InstanceType
           - SpotPrice
-      - Label:
-          default: Server Settings
-        Parameters:
-          - MinecraftImageTag
+          - GenerateNewSave
+          - SaveName
+          - LoadLatestSave
       - Label:
           default: Optional Server Settings
         Parameters:
-          - MinecraftTypeTag
-          - AdminPlayerNames
-          - Difficulty
-          - Whitelist
-          - MinecraftVersion
-          - Memory
-          - Seed
-          - MaxPlayers
-          - ViewDistance
-          - GameMode
-          - LevelType
-          - EnableRollingLogs
           - Timezone
       - Label:
           default: Optional Remote Access (SSH) Configuration
@@ -179,23 +99,11 @@ Metadata:
           - RecordName
     ParameterLabels:
       ServerState:
-        default: "Update this parameter to shut down / start up your Minecraft server as required to save on cost. Takes a few minutes to take effect."
+        default: "Update this parameter to shut down / start up your server as required to save on cost. Takes a few minutes to take effect."
       InstanceType:
         default: "Which instance type? You must make sure this is available in your region! https://aws.amazon.com/ec2/pricing/on-demand/"
       SpotPrice:
         default: "Maximum spot price per hour? Leave blank to disable spot pricing."
-      MinecraftImageTag:
-        default: "Which version of Minecraft do you want to launch?"
-      MinecraftTypeTag:
-        default: "Which type of Minecraft do you want to launch?"
-      AdminPlayerNames:
-        default: "A comma delimited list (no spaces) of player names to be admins"
-      Difficulty:
-        default: "Which difficulty?"
-      Whitelist:
-        default: "A comma delimited list (no spaces) of player names"
-      MinecraftVersion:
-        default: "Minecraft version ie 1.16.3"
       KeyPairName:
         default: "If you wish to access the instance via SSH, select a Key Pair to use. https://console.aws.amazon.com/ec2/v2/home?#KeyPairs:sort=keyName"
       YourIPv4:
@@ -203,46 +111,21 @@ Metadata:
       YourIPv6:
         default: "If you wish to access the instance via SSH and using IPv6, provide it."
       HostedZoneId:
-        default: "If you have a hosted zone in Route 53 and wish to update a DNS record whenever your Minecraft instance starts, supply the hosted zone ID here."
+        default: "If you have a hosted zone in Route 53 and wish to update a DNS record whenever your instance starts, supply the hosted zone ID here."
       RecordName:
-        default: "If you have a hosted zone in Route 53 and wish to set a DNS record whenever your Minecraft instance starts, supply a record name here (e.g. minecraft.mydomain.com)."
-      Memory:
-        default: "If you wish to increase the Java memory-heap limit of 1GB. Format: <size>[g|G|m|M|k|K]"
-      Seed:
-        default: "Seed for world generation"
-      MaxPlayers:
-        default: "Max simultaneous players"
-      ViewDistance:
-        default: "Max view distance"
-      GameMode:
-        default: "The Minecraft game mode"
-      LevelType:
-        default: "Level type for world generation"
-      EnableRollingLogs:
-        default: "Whether to enable rolling logs"
+        default: "If you have a hosted zone in Route 53 and wish to set a DNS record whenever your instance starts, supply a record name here (e.g. server.mydomain.com)."
       Timezone:
         default: "The server's timezone"
 
 Conditions:
-  MinecraftTypeTagProvided: !Not [ !Equals [ !Ref MinecraftTypeTag, '' ] ]
-  AdminPlayerNamesProvided: !Not [ !Equals [ !Ref AdminPlayerNames, '' ] ]
-  DifficultyProvided: !Not [ !Equals [ !Ref Difficulty, '' ] ]
-  WhitelistProvided: !Not [ !Equals [ !Ref Whitelist, '' ] ]
-  MinecraftVersionProvided: !Not [ !Equals [ !Ref MinecraftVersion, '' ] ]
+  FactorioGenerateNewSaveProvided: !Not [ !Equals [ !Ref GenerateNewSave, '' ] ]
+  FactorioSaveNameProvided: !Not [ !Equals [ !Ref SaveName, '' ] ]
+  FactorioLoadLatestSaveProvided: !Not [ !Equals [ !Ref LoadLatestSave, '' ] ]
   KeyPairNameProvided: !Not [ !Equals [ !Ref KeyPairName, '' ] ]
   IPv4AddressProvided: !Not [ !Equals [ !Ref YourIPv4, '' ] ]
   IPv6AddressProvided: !Not [ !Equals [ !Ref YourIPv6, '' ] ]
   DnsConfigEnabled: !And [ !Not [ !Equals [ !Ref HostedZoneId, '' ] ], !Not [ !Equals [ !Ref RecordName, '' ] ] ]
   SpotPriceProvided: !Not [ !Equals [ !Ref SpotPrice, '' ] ]
-  MemoryProvided: !Not [ !Equals [ !Ref Memory, '' ] ]
-  SeedProvided: !Not [ !Equals [ !Ref Seed, '' ] ]
-  MaxPlayersProvided: !Not [ !Equals [ !Ref MaxPlayers, '' ] ]
-  ViewDistanceProvided: !Not [ !Equals [ !Ref ViewDistance, '' ] ]
-  GameModeProvided: !Not [ !Equals [ !Ref GameMode, '' ] ]
-  LevelTypeProvided: !Not [ !Equals [ !Ref LevelType, '' ] ]
-  EnableRollingLogsProvided: !Not [ !Equals [ !Ref EnableRollingLogs, '' ] ]
-  TimezoneProvided: !Not [ !Equals [ !Ref Timezone, '' ] ]
-
 
 Mappings:
   ServerState:
@@ -327,6 +210,9 @@ Resources:
     Properties:
       BackupPolicy:
         Status: ENABLED
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_7_DAYS
+        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
 
   MountA:
     Type: AWS::EFS::MountTarget
@@ -380,8 +266,12 @@ Resources:
             IpProtocol: tcp
             CidrIpv6: !Sub "${YourIPv6}/128"
           - !Ref 'AWS::NoValue'
-        - FromPort: 25565
-          ToPort: 25565
+        - FromPort: 34197
+          ToPort: 34197
+          IpProtocol: udp
+          CidrIp: 0.0.0.0/0
+        - FromPort: 27015
+          ToPort: 27015
           IpProtocol: tcp
           CidrIp: 0.0.0.0/0
       VpcId: !Ref Vpc
@@ -403,9 +293,9 @@ Resources:
           #!/bin/bash -xe
           echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
           yum install -y amazon-efs-utils
-          mkdir /opt/minecraft
-          mount -t efs ${Efs}:/ /opt/minecraft
-          chown 845:845 /opt/minecraft
+          mkdir /opt/factorio
+          mount -t efs ${Efs}:/ /opt/factorio
+          chown 845:845 /opt/factorio
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -434,7 +324,7 @@ Resources:
                 - cloudformation.amazonaws.com
             Action:
               - sts:AssumeRole
-      Policies:
+      Policies: # TODO this is not needed anymore (no dashboards)
         - PolicyName: root
           PolicyDocument:
             Version: "2012-10-17"
@@ -523,90 +413,42 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Volumes:
-        - Host:
-            SourcePath: /opt/minecraft
-          Name: minecraft
+        - Name: factorio
+          Host:
+            SourcePath: /opt/factorio
       ContainerDefinitions:
-        - Name: minecraft
-          MemoryReservation: 1024
-          Image: !Sub "itzg/minecraft-server:${MinecraftImageTag}"
+        - Name: factorio
+          MemoryReservation: 1024 # TODO: check
+          Image: factoriotools/factorio # TODO update image
           PortMappings:
-            - ContainerPort: 25565
-              HostPort: 25565
+            - ContainerPort: 34197
+              HostPort: 34197
+              Protocol: udp
+            - ContainerPort: 27015
+              HostPort: 27015
               Protocol: tcp
           MountPoints:
-            - ContainerPath: /data
-              SourceVolume: minecraft
-              ReadOnly: false
+            - ContainerPath: /factorio
+              SourceVolume: factorio
           Environment:
-            - Name: "EULA"
-              Value: "TRUE"
-            - Name: "INIT_MEMORY"
-              Value: "512M"
+            - Name: "PORT"
+              Value: "34197"
+            - Name: "RCON_PORT"
+              Value: "27015"
             - !If
-              - MinecraftTypeTagProvided
-              - Name: "TYPE"
-                Value: !Sub "${MinecraftTypeTag}"
+              - FactorioGenerateNewSaveProvided
+              - Name: "GENERATE_NEW_SAVE"
+                Value: !Sub "${GenerateNewSave}"
               - !Ref 'AWS::NoValue'
             - !If
-              - AdminPlayerNamesProvided
-              - Name: "OPS"
-                Value: !Sub "${AdminPlayerNames}"
+              - FactorioSaveNameProvided
+              - Name: "SAVE_NAME"
+                Value: !Sub "${SaveName}"
               - !Ref 'AWS::NoValue'
             - !If
-              - DifficultyProvided
-              - Name: "DIFFICULTY"
-                Value: !Sub "${Difficulty}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - WhitelistProvided
-              - Name: "WHITELIST"
-                Value: !Sub "${Whitelist}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - MinecraftVersionProvided
-              - Name: "VERSION"
-                Value: !Sub "${MinecraftVersion}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - MemoryProvided
-              - Name: "MAX_MEMORY"
-                Value: !Sub "${Memory}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - SeedProvided
-              - Name: "SEED"
-                Value: !Sub "${Seed}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - MaxPlayersProvided
-              - Name: "MAX_PLAYERS"
-                Value: !Sub "${MaxPlayers}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - ViewDistanceProvided
-              - Name: "VIEW_DISTANCE"
-                Value: !Sub "${ViewDistance}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - GameModeProvided
-              - Name: "MODE"
-                Value: !Sub "${GameMode}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - LevelTypeProvided
-              - Name: "LEVEL_TYPE"
-                Value: !Sub "${LevelType}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - EnableRollingLogsProvided
-              - Name: "ENABLE_ROLLING_LOGS"
-                Value: !Sub "${EnableRollingLogs}"
-              - !Ref 'AWS::NoValue'
-            - !If
-              - TimezoneProvided
-              - Name: "TZ"
-                Value: !Sub "${Timezone}"
+              - FactorioLoadLatestSaveProvided
+              - Name: "LOAD_LATEST_SAVE"
+                Value: !Sub "${SaveName}"
               - !Ref 'AWS::NoValue'
 
   # ====================================================
@@ -674,7 +516,7 @@ Resources:
                       },
                   ]
               })
-      Description: Sets Route 53 DNS Record for Minecraft
+      Description: Sets Route 53 DNS Record
       FunctionName: !Sub "${AWS::StackName}-set-dns"
       Handler: index.handler
       MemorySize: 128
@@ -711,5 +553,5 @@ Resources:
 
 Outputs:
   CheckInstanceIp:
-    Description: To find your Minecraft instance IP address, visit the following link. Click on the instance to find its Public IP address.
+    Description: To find your instance IP address, visit the following link. Click on the instance to find its Public IP address.
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/v2/home?region=${AWS::Region}#Instances:tag:aws:autoscaling:groupName=${AutoScalingGroup};sort=tag:Name"
